@@ -23,10 +23,13 @@ import { AuthGuard } from '../auth/auth.guard';
 import { ACGuard } from 'nest-access-control';
 import { User } from 'src/common/decorators/user.decorator';
 import { BookRepository } from '../books/book.repository';
-import { getManager } from 'typeorm';
+import { getManager, Repository, getRepository } from 'typeorm';
 import { OrderDTO } from './order.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { OrderItemRepository } from './orderItem.repository';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Address } from 'src/entity/address.entity';
+import { OrderItem } from 'src/entity/order_item.entity';
 
 @Crud({
   model: {
@@ -49,6 +52,10 @@ import { OrderItemRepository } from './orderItem.repository';
       },
       user: {
         eager: true,
+        exclude: ['password', 'createdAt', 'updatedAt', 'isActive'],
+      },
+      billingAdress: {
+        eager: true,
       },
     },
   },
@@ -58,6 +65,8 @@ import { OrderItemRepository } from './orderItem.repository';
 export class OrderController extends BaseController<Order> {
   constructor(
     public service: OrderService,
+    @InjectRepository(Address)
+    private readonly addressRepository: Repository<Address>,
     private readonly repository: OrderRepository,
     private readonly authorRepository: UserRepository,
     private readonly bookRepository: BookRepository,
@@ -75,14 +84,12 @@ export class OrderController extends BaseController<Order> {
   ) {
     const manager = getManager();
     const mapId = [];
-    console.log('user', user);
     const author = await this.authorRepository.findOne({
       where: { id: user.users.id },
     });
     dto.orderItems.forEach(item => {
       mapId.push(item['id']);
     });
-    console.log('map', mapId);
 
     const orderItem = await this.bookRepository.findByIds(mapId);
     if (!orderItem) {
@@ -110,7 +117,9 @@ export class OrderController extends BaseController<Order> {
     });
     dto['total'] = total;
 
-    // console.log('orderItem', orderItem);
+    const address = this.addressRepository.create(dto.billingAdress);
+    const saveAddress = await this.addressRepository.save(address);
+    dto.billingAdress = saveAddress;
 
     const order = this.repository.create({ ...dto, user: author });
     await this.repository.save(order);
@@ -132,9 +141,6 @@ export class OrderController extends BaseController<Order> {
         { orderNumber: orderOne.orderNumber + 1 },
       );
     });
-
-    // const index = orderItem.find(item => item.id == 12);
-    // console.log(index);
   }
 
   @Post('price')
@@ -152,5 +158,23 @@ export class OrderController extends BaseController<Order> {
     if (book.prices[2].format == dto.format) {
       return book.prices[2].price * dto.quantity;
     }
+  }
+
+  @Get('bestseller')
+  async getBestSeller() {
+    const bestorder = await getRepository(OrderItem)
+      .createQueryBuilder('order_item')
+      .groupBy('order.bookId')
+      .getRawMany();
+  }
+
+  @Override('getManyBase')
+  async getMany(@ParsedRequest() req: CrudRequest, @ParsedBody() dto: Order) {
+    return this.base.getManyBase(req);
+  }
+
+  @Override('getOneBase')
+  async getOne(@ParsedRequest() req: CrudRequest, @ParsedBody() dto: Order) {
+    return this.base.getOneBase(req);
   }
 }

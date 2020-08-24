@@ -22,14 +22,12 @@
     "seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js config",
     "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
     "schema:drop": "ts-node ./node_modules/typeorm/cli.js schema:drop",
-    "schema:sync": "ts-node ./node_modules/typeorm/cli.js schema:sync",
-    "refresh:db": "npm run schema:drop && npm run schema:sync && npm run seed:run"
+    "schema:sync": "ts-node ./node_modules/typeorm/cli.js schema:sync"
   },
   "dependencies": {
-    "@chenfengyuan/vue-number-input": "^1.2.1",
     "@nestjs/common": "^7.0.0",
+    "@nestjs/config": "^0.5.0",
     "@nestjs/core": "^7.0.0",
-    "@nestjs/microservices": "^7.4.2",
     "@nestjs/platform-express": "^7.0.0",
     "@nestjs/swagger": "^4.5.12",
     "@nestjs/typeorm": "^7.1.0",
@@ -43,11 +41,11 @@
     "fs": "0.0.1-security",
     "googleapis": "^58.0.0",
     "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.19",
     "moment": "^2.27.0",
     "multer": "^1.4.2",
     "multer-drive": "^1.0.3",
     "nest-access-control": "^2.0.2",
+    "nestjs-config": "^1.4.7",
     "pg": "^8.3.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
@@ -55,8 +53,7 @@
     "slugify": "^1.4.5",
     "swagger-ui-express": "^4.1.4",
     "typeorm": "^0.2.25",
-    "typeorm-seeding": "^1.6.1",
-    "vue": "^2.6.11"
+    "typeorm-seeding": "^1.6.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^7.0.0",

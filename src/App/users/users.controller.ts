@@ -112,6 +112,7 @@ export class UserController extends BaseController<User> {
     const id = req.parsed.paramsFilter.find(
       f => f.field === 'id' && f.operator === '$eq',
     ).value;
+
     const data = this.repository.findOne({ where: { id } });
     if (!data) {
       throw new HttpException(
@@ -130,12 +131,21 @@ export class UserController extends BaseController<User> {
   }
 
   @Override('updateOneBase')
+  @UseGuards(AuthGuard, ACGuard)
+  @UseRoles({
+    resource: 'user',
+    action: 'update',
+    possession: 'any',
+  })
   async restore(@ParsedRequest() req: CrudRequest): Promise<void> {
-    console.log('update');
     const id = req.parsed.paramsFilter.find(
       f => f.field === 'id' && f.operator === '$eq',
     ).value;
-    const data = await this.repository.findOne({ where: { id } });
+
+    const data = await this.repository.findOne({
+      withDeleted: true,
+      where: { id, deletedAt: Not(IsNull()) },
+    });
     if (!data) {
       throw new HttpException(
         {
@@ -145,7 +155,7 @@ export class UserController extends BaseController<User> {
         HttpStatus.NOT_FOUND,
       );
     }
-    //await this.repository.restore({ id });
+    await this.repository.restore({ id });
   }
   @Override('createOneBase')
   @ApiOkResponse({ description: 'User login' })
@@ -210,16 +220,15 @@ export class UserController extends BaseController<User> {
         where: {
           deletedAt: Not(IsNull()),
         },
+        relations: ['role'],
+        select: ['id', 'email', 'gender', 'createdAt', 'role'],
       });
       return data;
     } catch (error) {
       throw new InternalServerErrorException('Error: Internal Server');
     }
   }
-  @Get('/category/own')
-  async getOwn(@ParsedRequest() req: CrudRequest) {
-    console.log('here');
-  }
+
   @Override('createManyBase')
   async createMany(
     @ParsedRequest() req: CrudRequest,
@@ -264,6 +273,12 @@ export class UserController extends BaseController<User> {
     }
   }
   @Put('updateOne/:id')
+  @UseGuards(AuthGuard, ACGuard)
+  @UseRoles({
+    resource: 'user',
+    action: 'update',
+    possession: 'any',
+  })
   async updateUser(@Body() dto: Partial<User>, @Param('id') id: string) {
     try {
       const result = await this.repository.findOne({ id });

@@ -16,15 +16,10 @@ import { ValidationPipe } from 'src/shared/validation.pipe';
 import { AuthGuard } from './auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
-import { CONTEXT, RequestContext } from '@nestjs/microservices';
-import { Request } from 'express';
 @ApiTags('v1/auth')
 @Controller('api/v1/auth')
 export class AuthController {
-  constructor(
-    private authService: AuthServices,
-    @Inject(CONTEXT) private ctx: RequestContext,
-  ) {}
+  constructor(private authService: AuthServices) {}
 
   @Get()
   // @UseGuards(AuthGuard)

@@ -25,10 +25,7 @@ export default class CreateRolePermission implements Seeder {
         { roleId: 1, permissionId: 15 },
         { roleId: 1, permissionId: 16 },
 
-        { roleId: 2, permissionId: 1 },
         { roleId: 2, permissionId: 2 },
-        { roleId: 2, permissionId: 3 },
-        { roleId: 2, permissionId: 4 },
         { roleId: 2, permissionId: 5 },
         { roleId: 2, permissionId: 6 },
         { roleId: 2, permissionId: 7 },
@@ -41,23 +38,6 @@ export default class CreateRolePermission implements Seeder {
         { roleId: 2, permissionId: 14 },
         { roleId: 2, permissionId: 15 },
         { roleId: 2, permissionId: 16 },
-
-        { roleId: 3, permissionId: 1 },
-        { roleId: 3, permissionId: 2 },
-        { roleId: 3, permissionId: 3 },
-        { roleId: 3, permissionId: 4 },
-        { roleId: 3, permissionId: 5 },
-        { roleId: 3, permissionId: 6 },
-        { roleId: 3, permissionId: 7 },
-        { roleId: 3, permissionId: 8 },
-        { roleId: 3, permissionId: 9 },
-        { roleId: 3, permissionId: 10 },
-        { roleId: 3, permissionId: 11 },
-        { roleId: 3, permissionId: 12 },
-        { roleId: 3, permissionId: 13 },
-        { roleId: 3, permissionId: 14 },
-        { roleId: 3, permissionId: 15 },
-        { roleId: 3, permissionId: 16 },
       ])
       .execute();
   }

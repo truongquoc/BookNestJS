@@ -19,6 +19,7 @@ import {
   UseGuards,
   Param,
   Post,
+  Delete,
 } from '@nestjs/common';
 import { BaseController } from 'src/common/Base/base.controller';
 import { BooksService } from './books.service';
@@ -225,18 +226,28 @@ export class BooksController extends BaseController<Book> {
   @Get('getone/:slug')
   @UseGuards(RolesGuard, ACGuard)
   async getOne(@Param('slug') slug: string, @UserSigned() user) {
-    const book = await this.bookRepository.findOne({ where: { slug: slug } });
+    const book = await this.bookRepository.findOne({
+      where: { slug: slug },
+      relations: [
+        'comments',
+        'comments.author',
+        'ranks',
+      ] /**fix Password here */,
+    });
     if (user) {
       const manager = getManager();
       const recently = await manager.query(
         `Select * from recent_book Where BookId = ${book.id} and UserId='${user.id}'`,
       );
       console.log(recently.length);
-      if (recently.length == 0) {
-        const Addrecently = await manager.query(
-          `INSERT INTO recent_book values('${book.id}', '${user.id}')`,
+      if (recently.length > 0) {
+        const deleted = await manager.query(
+          `Delete from recent_book Where BookId = ${book.id} and UserId='${user.id}'`,
         );
       }
+      const Addrecently = await manager.query(
+        `INSERT INTO recent_book values('${book.id}', '${user.id}')`,
+      );
     }
 
     return book;
@@ -365,7 +376,7 @@ export class BooksController extends BaseController<Book> {
     if (checkFavorite) {
       const manager = getManager();
       await manager.query(
-        `DELETE FROM books_favorites_by_users
+        `DELETE FROM favorite_user
       WHERE "booksId" = ${id} and "usersId" = '${user.users.id}' `,
       );
       return { favorite: false };
@@ -395,5 +406,28 @@ export class BooksController extends BaseController<Book> {
       const data = await this.bookRepository.findByIds(map);
       return data;
     }
+  }
+
+  @Get(':id')
+  async getOneById(@Param('id') id: number) {
+    return await this.bookRepository.findOne({ id });
+  }
+
+  @Get('/favorites/:userId')
+  @UseGuards(RolesGuard, ACGuard)
+  async getFavoritesByuser(@Param('userId') id: string, @User() user) {
+    return await this.userRepository.findOne({
+      where: { id },
+      relations: ['favorites'],
+    });
+  }
+  @Delete('/:id/favorites')
+  @UseGuards(AuthGuard)
+  async deleteOneBookFromFavorites(@Param('id') id: number, @User() user) {
+    const manager = await getManager();
+
+    const deleteFavo = await manager.query(
+      `Delete from favorite_user where bookid=${id} and userid='${user.users.id}'`,
+    );
   }
 }

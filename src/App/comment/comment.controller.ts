@@ -9,6 +9,9 @@ import { ApiTags } from '@nestjs/swagger';
 import { UserRepository } from '../users/user.repository';
 import { BookRepository } from '../books/book.repository';
 import { AuthGuard } from '../auth/auth.guard';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Rank } from 'src/entity/rank.entity';
+import { Repository } from 'typeorm';
 @Crud({
   model: {
     type: Comment,
@@ -42,6 +45,8 @@ export class CommentController extends BaseController<Comment> {
     private readonly repository: CommentRepository,
     private readonly userRepository: UserRepository,
     private readonly bookRepository: BookRepository,
+    @InjectRepository(Rank)
+    private readonly rankRepository: Repository<Rank>,
   ) {
     super(repository);
   }
@@ -55,15 +60,32 @@ export class CommentController extends BaseController<Comment> {
   ) {
     let avg = body.rank;
     let times = 1;
+    console.log(body);
+
+    const book = await this.bookRepository.findOne({
+      where: { id: body.bookId },
+    });
+    const rankstar = await this.rankRepository.findOne({
+      where: { book, rank: body.rank },
+    });
+    if (rankstar) {
+      await this.rankRepository.update(
+        { id: rankstar.id },
+        { quantity: rankstar.quantity + 1 },
+      );
+    } else {
+      const createRank = this.rankRepository.create({
+        book,
+        rank: body.rank,
+        quantity: 1,
+      });
+      await this.rankRepository.save(createRank);
+    }
     const author = await this.userRepository.findOne({
       where: { id: user.users.id },
     });
     console.log('body', param.bookId);
     const { bookId } = param;
-    const book = await this.bookRepository.findOne({
-      where: { id: bookId },
-    });
-    console.log('book', body);
 
     const isExist = await this.service.findOneById(bookId);
     if (isExist) {

@@ -184,7 +184,17 @@ export class Book extends Base {
     type => User,
     user => user.favorites,
   )
-  @JoinTable()
+  @JoinTable({
+    name: 'favorite_user',
+    joinColumn: {
+      name: 'bookid',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'userid',
+      referencedColumnName: 'id',
+    },
+  })
   favoritesBy: User[];
 
   @ManyToMany(

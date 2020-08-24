@@ -147,10 +147,7 @@ export class CategoriesController extends BaseController<Category> {
     const slug = req.parsed.paramsFilter.find(
       f => f.field === 'slug' && f.operator === '$eq',
     ).value;
-    // if (CheckPossessionRole(role, 'DELETE')) {
-    //   console.log('true');
-    // }
-    // console.log(await CheckPossessionRole(role, 'DELETE'));
+
     if ((await CheckPossessionRole(role, 'DELETE')) == 'OWN') {
       const data = await this.repository.findOne({
         where: { slug },
@@ -169,6 +166,41 @@ export class CategoriesController extends BaseController<Category> {
     }
     return await this.repository.softDelete({ slug });
   }
+
+  @Override('updateOneBase')
+  @UseGuards(AuthGuard, ACGuard)
+  @UseRoles({
+    resource: 'category',
+    action: 'update',
+    possession: 'own',
+  })
+  async updateOne(
+    @ParsedRequest() req: CrudRequest,
+    @User() user,
+    @UserRoles() role,
+    @ParsedBody() dto: Category,
+  ) {
+    const slug = req.parsed.paramsFilter.find(
+      f => f.field === 'slug' && f.operator === '$eq',
+    ).value;
+
+    if ((await CheckPossessionRole(role, 'UPDATE')) == 'OWN') {
+      const data = await this.repository.findOne({
+        where: { slug },
+        relations: ['user'],
+      });
+      if (user.users.id != data.user.id) {
+        throw new HttpException(
+          {
+            message: 'Unauthorized Permission',
+            status: HttpStatus.UNAUTHORIZED,
+          },
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+    }
+    return await this.repository.update({ slug: slug }, { slug: dto.slug });
+  }
   @Override('getManyBase')
   async getMany(@ParsedRequest() req: CrudRequest) {
     return await this.base.getManyBase(req);
@@ -177,7 +209,11 @@ export class CategoriesController extends BaseController<Category> {
   async getAll(@ParsedRequest() req: CrudRequest) {
     return await this.repository.findTrees();
   }
-
+  @Get('/category/:userId/own')
+  async getOwn(@Param('userId') userId: string) {
+    const user = await this.authorRepository.findOne({ id: userId });
+    return await this.cateRepo.find({ where: { user } });
+  }
   @Get(':id')
   async getCategpry(
     @ParsedRequest() req: CrudRequest,
